@@ -24,6 +24,7 @@ class Config:
     LOG_DIR = os.path.join(OUTPUTS_DIR, "deeplabv3")
     EPOCH_PREDICTIONS_DIR = os.path.join(LOG_DIR, "epoch_predictions")
     EVAL_SAMPLES_PATH = os.path.join(PROJECT_ROOT, "src", "configs", "eval_samples.json")
+    CHECKPOINT_NAME = "best_deeplabv3.pth"
 
     IN_CHANNELS = 3
     OUT_CHANNELS = 1
@@ -38,6 +39,14 @@ class Config:
     NUM_WORKERS = 0
 
     DEVICE = "cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu"
+
+
+def get_config(epochs=30, lr=1e-4, batch_size=8):
+    config = Config()
+    config.NUM_EPOCHS = epochs
+    config.LEARNING_RATE = lr
+    config.BATCH_SIZE = batch_size
+    return config
 
 
 def train_epoch(model, dataloader, criterion, optimizer, device):
@@ -87,8 +96,7 @@ def validate(model, dataloader, criterion, device):
     return total_loss / len(dataloader), total_iou / len(dataloader)
 
 
-def main():
-    config = Config()
+def train(config):
     print(f"Using device: {config.DEVICE}")
 
     os.makedirs(config.CHECKPOINT_DIR, exist_ok=True)
@@ -174,7 +182,7 @@ def main():
 
         if val_iou > best_iou:
             best_iou = val_iou
-            torch.save(model.state_dict(), os.path.join(config.CHECKPOINT_DIR, "best_deeplabv3.pth"))
+            torch.save(model.state_dict(), os.path.join(config.CHECKPOINT_DIR, config.CHECKPOINT_NAME))
             print(f"  Saved best model with IoU: {best_iou:.4f}")
 
         scheduler.step(valid_loss)
@@ -214,7 +222,12 @@ def main():
     print("DeepLabV3 Training Complete")
     print("=" * 60)
     print(f"Best Validation IoU: {best_iou:.4f}")
-    print(f"Model saved to: {os.path.join(config.CHECKPOINT_DIR, 'best_deeplabv3.pth')}")
+    print(f"Model saved to: {os.path.join(config.CHECKPOINT_DIR, config.CHECKPOINT_NAME)}")
+
+
+def main():
+    config = get_config()
+    train(config)
 
 
 if __name__ == "__main__":

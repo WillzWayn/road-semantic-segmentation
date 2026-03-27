@@ -16,14 +16,13 @@ from training.dataset import build_dataloaders, build_train_valid_datasets, load
 from training.utils import calculate_iou, save_prediction_grid
 
 
-def get_config(image_size=512, batch_size=4):
+def get_config(image_size=256, batch_size=8, epochs=30, lr=1e-4):
     class Config:
         DATA_DIR = os.path.join(PROJECT_ROOT, "dataset")
         TRAIN_DIR = os.path.join(DATA_DIR, "train")
         VALID_DIR = os.path.join(DATA_DIR, "valid")
         OUTPUTS_DIR = os.path.join(PROJECT_ROOT, "outputs")
-        
-        # Change outputs based on resolution
+
         model_suffix = f"_{image_size}" if image_size != 256 else ""
         CHECKPOINT_DIR = os.path.join(OUTPUTS_DIR, "checkpoints")
         LOG_DIR = os.path.join(OUTPUTS_DIR, f"unet{model_suffix}")
@@ -36,15 +35,15 @@ def get_config(image_size=512, batch_size=4):
         BASE_CHANNELS = 64
 
         BATCH_SIZE = batch_size
-        NUM_EPOCHS = 30
-        LEARNING_RATE = 1e-4
+        NUM_EPOCHS = epochs
+        LEARNING_RATE = lr
         IMAGE_SIZE = image_size
         VALID_SPLIT = 0.15
         SEED = 42
         NUM_WORKERS = 8
 
         DEVICE = "cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu"
-        
+
     return Config()
 
 
@@ -100,16 +99,7 @@ def validate(model, dataloader, criterion, device):
     return total_loss / len(dataloader), total_iou / len(dataloader)
 
 
-def main():
-    parser = argparse.ArgumentParser(description="Train U-Net for Road Segmentation")
-    parser.add_argument("--image-size", type=int, default=256, help="Input image size")
-    parser.add_argument("--batch-size", type=int, default=8, help="Batch size")
-    args = parser.parse_args()
-
-    config = get_config(image_size=args.image_size, batch_size=args.batch_size)
-    print(f"Using device: {config.DEVICE}")
-    print(f"Training resolution: {config.IMAGE_SIZE}x{config.IMAGE_SIZE} with batch size {config.BATCH_SIZE}")
-
+def train(config):
     os.makedirs(config.CHECKPOINT_DIR, exist_ok=True)
     os.makedirs(config.LOG_DIR, exist_ok=True)
     os.makedirs(config.EPOCH_PREDICTIONS_DIR, exist_ok=True)
@@ -235,6 +225,25 @@ def main():
     print("=" * 60)
     print(f"Best Validation IoU: {best_iou:.4f}")
     print(f"Model saved to: {os.path.join(config.CHECKPOINT_DIR, config.CHECKPOINT_NAME)}")
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Train U-Net for Road Segmentation")
+    parser.add_argument("--image-size", type=int, default=256, help="Input image size")
+    parser.add_argument("--batch-size", type=int, default=8, help="Batch size")
+    parser.add_argument("--epochs", type=int, default=30, help="Number of epochs")
+    parser.add_argument("--lr", type=float, default=1e-4, help="Learning rate")
+    args = parser.parse_args()
+
+    config = get_config(
+        image_size=args.image_size,
+        batch_size=args.batch_size,
+        epochs=args.epochs,
+        lr=args.lr,
+    )
+    print(f"Using device: {config.DEVICE}")
+    print(f"Training resolution: {config.IMAGE_SIZE}x{config.IMAGE_SIZE} with batch size {config.BATCH_SIZE}")
+    train(config)
 
 
 if __name__ == "__main__":

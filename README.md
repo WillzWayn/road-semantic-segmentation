@@ -30,7 +30,7 @@ Optimal threshold found at **0.40-0.41**:
 ## Visual Results
 
 ### Sample Input/Output
-![Dataset examples](static/images_example.png)
+![Dataset examples](assets/images_example.png)
 
 ### U-Net Predictions
 ![U-Net validation predictions](outputs/unet/unet_predictions_valid_grid_01_06.png)
@@ -55,7 +55,7 @@ uv sync
 uv run python src/baselines/rgb_thresholding.py
 
 # Run prediction with trained checkpoint
-uv run python src/training/predict_unet_local.py --split valid
+uv run python src/evaluation/predict_unet_local.py --split valid
 ```
 
 > **Note:** Full training requires downloading the DeepGlobe Road Extraction dataset. See [Data Setup](#data-setup).
@@ -159,17 +159,38 @@ Training outputs:
 - Logs: `outputs/unet/`, `outputs/deeplabv3/`
 - Prediction grids saved each epoch
 
+### Using the CLI
+
+All training and prediction commands are available via a unified CLI:
+
+```bash
+# Train
+uv run python -m src train unet
+uv run python -m src train unet --epochs 10 --lr 0.001 --batch-size 4 --image-size 512
+uv run python -m src train deeplabv3
+uv run python -m src train deeplabv3 --epochs 5 --batch-size 16
+
+# Predict
+uv run python -m src predict unet
+uv run python -m src predict unet --checkpoint outputs/checkpoints/best_unet_512.pth --split train --threshold 0.35
+uv run python -m src predict deeplabv3
+
+# Help
+uv run python -m src --help
+uv run python -m src train unet --help
+```
+
 ### Run Prediction
 
 ```bash
 # Predict with U-Net checkpoint
-uv run python src/training/predict_unet_local.py \
+uv run python src/evaluation/predict_unet_local.py \
     --checkpoint outputs/checkpoints/best_unet.pth \
     --split valid \
     --threshold 0.4
 
 # Predict with DeepLabV3 checkpoint
-uv run python src/training/predict_deeplabv3_local.py \
+uv run python src/evaluation/predict_deeplabv3_local.py \
     --split valid
 ```
 
@@ -187,7 +208,7 @@ modal volume put unet-dataset dataset/train /train
 modal volume put unet-dataset dataset/valid /valid
 
 # Submit training job
-modal run --detach src/modal_unet_train.py
+modal run --detach scripts/modal_unet_train.py
 
 # Monitor and download results
 modal app logs <app-id>
@@ -208,8 +229,11 @@ src/
 │   ├── train_unet.py     # U-Net training pipeline
 │   ├── train_deeplabv3.py
 │   ├── dataset.py        # Dataset and dataloaders
-│   ├── predict_unet_local.py
 │   └── utils.py
+├── evaluation/
+│   ├── predict_unet_local.py
+│   ├── predict_deeplabv3_local.py
+│   └── generate_example_predictions.py
 ├── losses/
 │   └── segmentation.py   # BCEWithLogitsLoss, BCEDiceLoss
 ├── transforms/
@@ -224,12 +248,25 @@ src/
 └── configs/
     └── eval_samples.json # Fixed eval sample IDs
 
+scripts/
+├── modal_unet_train.py       # Cloud training on Modal GPU
+├── modal_deeplabv3_train.py
+├── download_modal_outputs.py # Download results from Modal volumes
+├── preview_four_in_a_row.py
+└── preview_geometric_augmentations.py
+
 outputs/
 ├── checkpoints/          # Trained model weights
 ├── unet/                 # U-Net logs and predictions
-├── deeplabv3/           # DeepLabV3 logs and predictions
-└── baselines/           # Baseline results
+├── deeplabv3/            # DeepLabV3 logs and predictions
+└── baselines/            # Baseline results
 
+report/
+├── src/                  # LaTeX source files
+└── output/               # Compiled PDFs
+
+assets/                   # Static images for README
+docs/                     # Project documentation
 tests/                    # Unit tests
 ```
 
