@@ -12,24 +12,19 @@
 %  PANEL a)  --  formula + visual illustration
 % ============================================================
 
-% Fraction bar at y = 1.6
-\node[anchor=east] at (1.8, 1.6) {\normalsize$\mathrm{IoU} =$};
-\draw[line width=1.2pt] (1.9, 1.6) -- (4.1, 1.6);
-\node[anchor=south] at (3.0, 1.6) {Overlap Area};
-\node[anchor=north] at (3.0, 1.6) {Union Area};
+% Visual illustration without fraction bar and text
+% Sq1: (0, 0.6) to (1.4, 2.0)   1.4 x 1.4
+% Sq2: (0.6, 0.0) to (2.0, 1.4)   offset: +0.6x, -0.6y
+% Intersection: (0.6, 0.6) to (1.4, 1.4)
 
-% ---- Overlap diagram (above bar) ----
-% Sq1: (4.4, 2.3) to (5.8, 3.7)   1.4 x 1.4
-% Sq2: (5.0, 1.7) to (6.4, 3.1)   offset: +0.6x, -0.6y
-% Intersection: (5.0, 2.3) to (5.8, 3.1)
-\fill[white] (4.4, 2.3) rectangle (5.8, 3.7);
-\fill[white] (5.0, 1.7) rectangle (6.4, 3.1);
+\fill[white] (0, 0.6) rectangle (1.4, 2.0);
+\fill[white] (0.6, 0.0) rectangle (2.0, 1.4);
 \begin{scope}
-  \clip (4.4, 2.3) rectangle (5.8, 3.7);
-  \fill[diagblue] (5.0, 1.7) rectangle (6.4, 3.1);
+  \clip (0, 0.6) rectangle (1.4, 2.0);
+  \fill[diagblue] (0.6, 0.0) rectangle (2.0, 1.4);
 \end{scope}
-\draw (4.4, 2.3) rectangle (5.8, 3.7);
-\draw (5.0, 1.7) rectangle (6.4, 3.1);
+\draw (0, 0.6) rectangle (1.4, 2.0);
+\draw (0.6, 0.0) rectangle (2.0, 1.4);
 
 \end{tikzpicture}
 \end{document}

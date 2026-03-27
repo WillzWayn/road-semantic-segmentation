@@ -259,12 +259,20 @@ We will see whether that distinction makes a difference.
 \subsection{Evaluation Metric}
 
 We report Intersection over Union (IoU), the Jaccard index:
-\begin{equation}
-  \text{IoU} = \frac{|\hat{Y} \cap Y|}{|\hat{Y} \cup Y|}
-  \label{eq:iou}
-\end{equation}
-
-\includegraphics[width=0.7\linewidth]{iou_diagram}
+\begin{figure}[h]
+  \centering
+  \begin{minipage}{0.4\linewidth}
+    \centering
+    \begin{equation}
+      \text{IoU} = \frac{|\hat{Y} \cap Y|}{|\hat{Y} \cup Y|}
+      \label{eq:iou}
+    \end{equation}
+  \end{minipage}
+  \begin{minipage}{0.4\linewidth}
+    \centering
+    \includegraphics[width=0.6\linewidth]{../static/iou_diagram.pdf}
+  \end{minipage}
+\end{figure}
 
 where $Y$ is the ground-truth mask and $\hat{Y}$ the predicted mask.
 IoU is symmetric in false positives and false negatives and cannot be inflated by the
@@ -355,7 +363,7 @@ training recipe for this dataset size -- the model converges cleanly, without ov
 
 \begin{figure}[t]
   \centering
-  \includegraphics[width=\columnwidth]{../outputs/unet/unet_predictions_valid.png}
+  \includegraphics[width=\columnwidth]{../outputs/unet/unet_prediction_4_valid.png}
   \caption{U-Net predictions on validation images (image, ground-truth,
            prediction, overlay).
            U-Net recovers thin rural roads and complex urban intersections
@@ -365,7 +373,7 @@ training recipe for this dataset size -- the model converges cleanly, without ov
 
 \begin{figure}[t]
   \centering
-  \includegraphics[width=\columnwidth]{../outputs/deeplabv3/deeplabv3_predictions_valid.png}
+  \includegraphics[width=\columnwidth]{../outputs/deeplabv3/deeplabv3_prediction_4_valid.png}
   \caption{DeepLabV3 predictions on the same validation images.
            The model identifies road \textit{regions} but blurs their
            boundaries and struggles to trace thin structures.}

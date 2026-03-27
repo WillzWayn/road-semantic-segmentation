@@ -25,9 +25,12 @@ def predict_mask_from_id(model, split_dir, file_id, image_size, device, threshol
     return image_np, pred_mask
 
 
-def save_prediction_grid(model, file_ids, split_dir, out_path, include_label, image_size, device, threshold=0.5):
+def save_prediction_grid(model, file_ids, split_dir, out_path, include_label, image_size, device, threshold=0.5, title=None):
     n_cols = 4 if include_label else 3
     fig, axes = plt.subplots(len(file_ids), n_cols, figsize=(4 * n_cols, 3.6 * len(file_ids)))
+    if title:
+        fig.suptitle(title, fontsize=20, fontweight="bold", y=0.98 + (0.02 if len(file_ids) <= 4 else 0))
+
     if len(file_ids) == 1:
         axes = np.expand_dims(axes, axis=0)
 
@@ -67,12 +70,14 @@ def save_prediction_grid(model, file_ids, split_dir, out_path, include_label, im
         axes[i, overlay_col].axis("off")
 
         if i == 0:
-            axes[i, 0].set_title("IMAGE")
+            axes[i, 0].set_title("Satellite Image", fontsize=14, pad=10)
             if include_label:
-                axes[i, 1].set_title("LABEL")
-            axes[i, pred_col].set_title("PREDICT")
-            axes[i, overlay_col].set_title("OVERLAY")
+                axes[i, 1].set_title("Ground Truth", fontsize=14, pad=10)
+            axes[i, pred_col].set_title("Predicted Mask", fontsize=14, pad=10)
+            axes[i, overlay_col].set_title("Overlay Prediction", fontsize=14, pad=10)
 
     plt.tight_layout()
-    plt.savefig(out_path, dpi=150)
+    if title:
+        fig.subplots_adjust(top=0.92 if len(file_ids) > 4 else 0.88)
+    plt.savefig(out_path, dpi=150, bbox_inches="tight")
     plt.close(fig)

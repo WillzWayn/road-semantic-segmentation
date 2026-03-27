@@ -219,8 +219,10 @@
     \end{tabular}
   \end{center}
   \vspace{0.5em}
-  We can notice that the gap is not marginal: U-Net leads DeepLabV3 by \textbf{0.24 IoU points}. \\[0.4em]
-  \textbf{Resolution Paradox}: Training at $512\times512$ visibly preserves thinner structures better than $256\times256$, but yields a slightly \textit{lower} IoU (0.565). Why? Downsampling heavily blurs and "engorges" roads, making them easier to overlap artificially, whereas high resolution demands strict pixel-perfect matching.
+  We can notice that the gap is not marginal: U-Net leads DeepLabV3 by \textbf{0.24 IoU points}
+  and outperforms both baselines by over \textbf{0.30 points}. \\[0.4em]
+  The ladder produces a clear ordering --- with one surprise: DeepLabV3 falls \textit{below}
+  what its size and pretraining would suggest.
 \end{frame}
 
 \begin{frame}{Results: Visual Comparison}
@@ -228,13 +230,13 @@
     \column{0.5\textwidth}
     \centering
     \textbf{U-Net}
-    \includegraphics[width=\linewidth]{unet/unet_predictions_valid.png}
+    \includegraphics[width=\linewidth]{unet/unet_prediction_3_valid.png}
     \small Sharp, connected outlines; thin rural tracks recovered.
 
     \column{0.5\textwidth}
     \centering
     \textbf{DeepLabV3}
-    \includegraphics[width=\linewidth]{deeplabv3/deeplabv3_predictions_valid.png}
+    \includegraphics[width=\linewidth]{deeplabv3/deeplabv3_prediction_3_valid.png}
     \small Road \textit{regions} found, but edges blurred and thin segments dropped.
   \end{columns}
   \vspace{0.4em}
@@ -245,6 +247,20 @@
 
 % =====================
 \section{Discussion}
+
+\begin{frame}{The Resolution Paradox: $256\times256$ vs $512\times512$}
+  We experimented with higher resolution ($512\times512$) to better preserve thin roads.
+  \vspace{0.5em}
+  
+  \begin{block}{The Paradox}
+    \begin{itemize}
+      \item \textbf{$256\times256$ (IoU 0.588):} Downsampling heavily blurs thin roads, artificially thickening them. The model overlaps these inflated areas more easily, resulting in higher mathematical IoU.
+      \item \textbf{$512\times512$ (IoU 0.565):} Higher resolution keeps roads thinner and more accurate to reality. However, IoU heavily penalises slight 1-pixel misalignments at the boundaries.
+    \end{itemize}
+  \end{block}
+  \vspace{0.5em}
+  \textbf{Takeaway:} The higher resolution model preserves the true topology of the road network better qualitatively, even if strict exact-pixel IoU matching decreases.
+\end{frame}
 
 \begin{frame}{Why U-Net Outperforms DeepLabV3}
   I think this result deserves a careful interpretation rather than a quick dismissal. \\[0.4em]
@@ -267,7 +283,7 @@
     \textbf{What could push further:}
     \begin{itemize}
       \item BCE + Dice loss --- directly optimises an IoU proxy; known to help under class imbalance
-      \item Train at $512\times512$ --- thinnest roads likely lost at current resolution
+      \item Boundary-aware loss --- to compensate for the strictness of IoU on high-resolution ($512\times512$) fine structures
       \item Test-time augmentation --- typically +1--3 IoU points at no training cost
     \end{itemize}
 
@@ -277,7 +293,6 @@
       \item One geographic region only (South \& SE Asia)
       \item No evidence of generalisation to other sensors or seasons
       \item Test labels withheld by the challenge
-      \item $256\times256$ resizing discards spatial detail
     \end{itemize}
   \end{columns}
 \end{frame}
