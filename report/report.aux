@@ -1,0 +1,79 @@
+\relax 
+\providecommand\hyper@newdestlabel[2]{}
+\providecommand\HyField@AuxAddToFields[1]{}
+\providecommand\HyField@AuxAddToCoFields[2]{}
+\citation{demir2018deepglobe}
+\citation{ronneberger2015unet}
+\citation{chen2017deeplabv3}
+\citation{demir2018deepglobe}
+\@writefile{toc}{\contentsline {section}{\numberline {I}Introduction}{1}{section.1}\protected@file@percent }
+\newlabel{sec:intro}{{I}{1}{Introduction}{section.1}{}}
+\newlabel{sec:intro@cref}{{[section][1][]I}{[1][1][]1}{}{}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {II}Dataset}{1}{section.2}\protected@file@percent }
+\newlabel{sec:data}{{II}{1}{Dataset}{section.2}{}}
+\newlabel{sec:data@cref}{{[section][2][]II}{[1][1][]1}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {II-A}}DeepGlobe Road Extraction}{1}{subsection.2.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {II-B}}Exploratory Data Analysis}{1}{subsection.2.2}\protected@file@percent }
+\newlabel{sec:eda}{{\mbox  {II-B}}{1}{Exploratory Data Analysis}{subsection.2.2}{}}
+\newlabel{sec:eda@cref}{{[subsection][2][2]\mbox  {II-B}}{[1][1][]1}{}{}{}}
+\citation{kolmogorov1933ks}
+\citation{lloyd1982kmeans}
+\citation{ronneberger2015unet}
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Samples from the DeepGlobe training split, with their binary road masks. Road pixels are white. Notice the variety of terrain types and the range of road widths -- from wide urban arteries to thin dirt tracks that nearly vanish.}}{2}{figure.1}\protected@file@percent }
+\newlabel{fig:examples}{{1}{2}{Samples from the DeepGlobe training split, with their binary road masks. Road pixels are white. Notice the variety of terrain types and the range of road widths -- from wide urban arteries to thin dirt tracks that nearly vanish}{figure.1}{}}
+\newlabel{fig:examples@cref}{{[figure][1][]1}{[1][1][]2}{}{}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {III}Methodology}{2}{section.3}\protected@file@percent }
+\newlabel{sec:method}{{III}{2}{Methodology}{section.3}{}}
+\newlabel{sec:method@cref}{{[section][3][]III}{[1][2][]2}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-A}}Preprocessing}{2}{subsection.3.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-B}}Data Augmentation}{2}{subsection.3.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-C}}Baselines}{2}{subsection.3.3}\protected@file@percent }
+\newlabel{sec:baselines}{{\mbox  {III-C}}{2}{Baselines}{subsection.3.3}{}}
+\newlabel{sec:baselines@cref}{{[subsection][3][3]\mbox  {III-C}}{[1][2][]2}{}{}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {\mbox  {III-C}1}RGB Thresholding}{2}{subsubsection.3.3.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {\mbox  {III-C}2}K-Means Clustering}{2}{subsubsection.3.3.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-D}}U-Net}{2}{subsection.3.4}\protected@file@percent }
+\newlabel{sec:unet}{{\mbox  {III-D}}{2}{U-Net}{subsection.3.4}{}}
+\newlabel{sec:unet@cref}{{[subsection][4][3]\mbox  {III-D}}{[1][2][]2}{}{}{}}
+\citation{chen2017deeplabv3}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-E}}DeepLabV3}{3}{subsection.3.5}\protected@file@percent }
+\newlabel{sec:deeplabv3}{{\mbox  {III-E}}{3}{DeepLabV3}{subsection.3.5}{}}
+\newlabel{sec:deeplabv3@cref}{{[subsection][5][3]\mbox  {III-E}}{[1][3][]3}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-F}}Evaluation Metric}{3}{subsection.3.6}\protected@file@percent }
+\newlabel{eq:iou}{{1}{3}{Evaluation Metric}{equation.1}{}}
+\newlabel{eq:iou@cref}{{[equation][1][]1}{[1][3][]3}{}{}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {I}{\ignorespaces Validation IoU for all methods. For the deep learning models, the binarisation threshold was chosen by sweeping $[0.35, 0.50]$ in steps of 0.05 on the validation set.}}{3}{table.1}\protected@file@percent }
+\newlabel{tab:results}{{I}{3}{Validation IoU for all methods. For the deep learning models, the binarisation threshold was chosen by sweeping $[0.35, 0.50]$ in steps of 0.05 on the validation set}{table.1}{}}
+\newlabel{tab:results@cref}{{[table][1][]I}{[1][3][]3}{}{}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {IV}Results}{3}{section.4}\protected@file@percent }
+\newlabel{sec:results}{{IV}{3}{Results}{section.4}{}}
+\newlabel{sec:results@cref}{{[section][4][]IV}{[1][3][]3}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-A}}Quantitative Comparison}{3}{subsection.4.1}\protected@file@percent }
+\citation{milletari2016vnet}
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces U-Net training and validation loss over 30 epochs. Validation loss tracks training loss throughout, with no divergence, indicating that the augmentation strategy is controlling overfitting. The small inflections correspond to learning-rate reductions from \texttt  {ReduceLROnPlateau}.}}{4}{figure.2}\protected@file@percent }
+\newlabel{fig:curves}{{2}{4}{U-Net training and validation loss over 30 epochs. Validation loss tracks training loss throughout, with no divergence, indicating that the augmentation strategy is controlling overfitting. The small inflections correspond to learning-rate reductions from \texttt {ReduceLROnPlateau}}{figure.2}{}}
+\newlabel{fig:curves@cref}{{[figure][2][]2}{[1][3][]4}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-B}}Training Dynamics}{4}{subsection.4.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-C}}Qualitative Predictions}{4}{subsection.4.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {V}Discussion}{4}{section.5}\protected@file@percent }
+\newlabel{sec:discussion}{{V}{4}{Discussion}{section.5}{}}
+\newlabel{sec:discussion@cref}{{[section][5][]V}{[1][4][]4}{}{}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {VI}Conclusion}{4}{section.6}\protected@file@percent }
+\newlabel{sec:conclusion}{{VI}{4}{Conclusion}{section.6}{}}
+\newlabel{sec:conclusion@cref}{{[section][6][]VI}{[1][4][]4}{}{}{}}
+\bibstyle{IEEEtran}
+\bibdata{report}
+\bibcite{demir2018deepglobe}{1}
+\bibcite{ronneberger2015unet}{2}
+\bibcite{chen2017deeplabv3}{3}
+\bibcite{kolmogorov1933ks}{4}
+\bibcite{lloyd1982kmeans}{5}
+\bibcite{milletari2016vnet}{6}
+\@writefile{toc}{\contentsline {section}{References}{5}{section*.1}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces U-Net predictions on validation images (image, ground-truth, prediction, overlay). U-Net recovers thin rural roads and complex urban intersections with sharp, coherent outlines.}}{5}{figure.3}\protected@file@percent }
+\newlabel{fig:unet_preds}{{3}{5}{U-Net predictions on validation images (image, ground-truth, prediction, overlay). U-Net recovers thin rural roads and complex urban intersections with sharp, coherent outlines}{figure.3}{}}
+\newlabel{fig:unet_preds@cref}{{[figure][3][]3}{[1][4][]5}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces DeepLabV3 predictions on the same validation images. The model identifies road \textit  {regions} but blurs their boundaries and struggles to trace thin structures.}}{6}{figure.4}\protected@file@percent }
+\newlabel{fig:dlv3_preds}{{4}{6}{DeepLabV3 predictions on the same validation images. The model identifies road \textit {regions} but blurs their boundaries and struggles to trace thin structures}{figure.4}{}}
+\newlabel{fig:dlv3_preds@cref}{{[figure][4][]4}{[1][4][]6}{}{}{}}
+\gdef \@abspage@last{6}

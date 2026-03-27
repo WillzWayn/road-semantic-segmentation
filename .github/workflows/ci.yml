@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "latest"
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Check import syntax (src/)
+        run: |
+          uv run python -m py_compile src/models/unet.py
+          uv run python -m py_compile src/models/deeplabv3.py
+          uv run python -m py_compile src/models/blocks.py
+          uv run python -m py_compile src/losses/segmentation.py
+          uv run python -m py_compile src/transforms/segmentation.py
+          uv run python -m py_compile src/utils/metrics.py
+          uv run python -m py_compile src/utils/visualization.py
+          uv run python -m py_compile src/training/dataset.py
+
+      - name: Run tests
+        run: uv run pytest tests/ -v --tb=short
+
+      - name: Test model import
+        run: |
+          uv run python -c "from src.models.unet import UNet; print('U-Net imported successfully')"
+          uv run python -c "from src.models.deeplabv3 import DeepLabV3; print('DeepLabV3 imported successfully')"

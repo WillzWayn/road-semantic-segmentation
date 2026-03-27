@@ -1,0 +1,36 @@
+[project]
+name = "2026-02-28-imageclassification"
+version = "0.1.0"
+description = "Road segmentation for satellite imagery using U-Net and DeepLabV3, with local and Modal GPU training workflows."
+readme = "README.md"
+requires-python = ">=3.12"
+authors = [
+    { name = "Will Zwayn" },
+]
+maintainers = [
+    { name = "Will Zwayn" },
+]
+dependencies = [
+    "ipykernel>=6.29.5",
+    "matplotlib>=3.10.8",
+    "numpy>=2.3.5",
+    "pandas>=2.3.3",
+    "pillow>=12.1.0",
+    "pip>=25.1.1",
+    "scikit-learn>=1.7.2",
+    "scipy>=1.16.3",
+    "torch>=2.0.0",
+    "torchvision>=0.15.0",
+    "tqdm>=4.65.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/willzwayn/2026-02-28-ImageClassification"
+Repository = "https://github.com/willzwayn/2026-02-28-ImageClassification"
+Issues = "https://github.com/willzwayn/2026-02-28-ImageClassification/issues"
+
+[dependency-groups]
+dev = [
+    "ipykernel>=6.29.5",
+    "pytest>=8.0.0",
+]

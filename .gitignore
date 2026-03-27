@@ -1,1 +1,48 @@
+# Local dataset (download separately)
 dataset/
+
+# Training outputs - ignore all generated artifacts
+outputs/
+checkpoints/
+
+# Keep only curated documentation artifacts
+!outputs/.gitkeep
+!outputs/baselines/
+!outputs/baselines/.gitkeep
+!outputs/baselines/kmeans_results.png
+!outputs/baselines/mask_analysis.png
+!outputs/unet/
+!outputs/unet/.gitkeep
+!outputs/unet/training_curves.png
+!outputs/unet/unet_predictions_valid_grid_01_06.png
+!outputs/deeplabv3/
+!outputs/deeplabv3/.gitkeep
+!outputs/deeplabv3/training_curves.png
+!outputs/deeplabv3/deeplabv3_predictions_valid_grid_01_06.png
+
+# Logs and downloaded artifacts
+logs/
+modal_downloads/
+
+# Python cache files
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*.pyc
+
+# Local virtual environments
+.venv/
+venv/
+env/
+
+# Notebook and OS artifacts
+.ipynb_checkpoints/
+.DS_Store
+
+# Secrets and credentials
+.env
+.env.*
+*.pem
+*.key
+credentials.json
+secrets.json

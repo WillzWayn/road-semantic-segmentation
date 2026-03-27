@@ -1,0 +1,48 @@
+✓ Initialized. View run at 
+https://modal.com/apps/willzwayn/main/ap-uLCn4NyEafNJg2wWCBgprx
+✓ Created objects.
+├── 🔨 Created mount 
+│   /Users/willzwayn/Developer/Wayn-Projects/2026-02-28-ImageClassification/src/
+│   modal_unet_train.py
+├── 🔨 Created mount 
+│   /Users/willzwayn/Developer/Wayn-Projects/2026-02-28-ImageClassification/src
+└── 🔨 Created function train_unet.
+Using device: cuda
+Train samples: 5293
+Valid samples: 933
+Total parameters: 31,043,521
+Trainable parameters: 31,043,521
+Starting training...
+
+Epoch 1/30
+
+[1ATrain:   0%|          | 0/221 [00:00<?, ?it/s]
+[1ATrain:   0%|          | 0/221 [00:52<?, ?it/s, iou=0.0468, loss=0.7577]
+[1ATrain:   0%|          | 1/221 [00:52<3:12:48, 52.59s/it, iou=0.0468, loss=0.7577]
+[1ATrain:   0%|          | 1/221 [01:07<3:12:48, 52.59s/it, iou=0.0562, loss=0.7418]
+[1ATrain:   1%|          | 2/221 [01:07<1:51:19, 30.50s/it, iou=0.0562, loss=0.7418]
+[1ATrain:   1%|          | 2/221 [01:51<1:51:19, 30.50s/it, iou=0.0480, loss=0.7215]
+[1ATrain:   1%|▏         | 3/221 [01:51<2:12:33, 36.48s/it, iou=0.0480, loss=0.7215]
+[1ATrain:   1%|▏         | 3/221 [01:53<2:12:33, 36.48s/it, iou=0.0819, loss=0.7178]
+[1ATrain:   2%|▏         | 4/221 [01:53<1:23:35, 23.11s/it, iou=0.0819, loss=0.7178]
+[1ATrain:   2%|▏         | 4/221 [01:57<1:23:35, 23.11s/it, iou=0.0654, loss=0.7095]
+[1ATrain:   2%|▏         | 5/221 [01:57<58:05, 16.14s/it, iou=0.0654, loss=0.7095]  
+[1ATrain:   2%|▏         | 5/221 [02:00<58:05, 16.14s/it, iou=0.0669, loss=0.7111]
+[1ATrain:   3%|▎         | 6/221 [02:00<41:20, 11.54s/it, iou=0.0669, loss=0.7111]
+[1ATrain:   3%|▎         | 6/221 [02:02<41:20, 11.54s/it, iou=0.0485, loss=0.7158]
+[1ATrain:   3%|▎         | 7/221 [02:02<30:44,  8.62s/it, iou=0.0485, loss=0.7158]
+[1ATrain:   3%|▎         | 7/221 [02:05<30:44,  8.62s/it, iou=0.0676, loss=0.7096]
+[1ATrain:   4%|▎         | 8/221 [02:05<23:47,  6.70s/it, iou=0.0676, loss=0.7096]
+[1ATrain:   4%|▎         | 8/221 [02:08<23:47,  6.70s/it, iou=0.0598, loss=0.7076]
+[1ATrain:   4%|▍         | 9/221 [02:08<19:09,  5.42s/it, iou=0.0598, loss=0.7076]
+[1ATrain:   4%|▍         | 9/221 [02:10<19:09,  5.42s/it, iou=0.0857, loss=0.7103]
+[1ATrain:   5%|▍         | 10/221 [02:10<16:01,  4.56s/it, iou=0.0857, loss=0.7103]                                                                                
+[1AUsing device: cuda
+Train samples: 5293
+Valid samples: 933
+Total parameters: 31,043,521
+Trainable parameters: 31,043,521
+Starting training...
+
+Epoch 1/30
+
