@@ -34,6 +34,9 @@ __pycache__/
 .venv/
 venv/
 env/
+ENV/
+env.bak/
+venv.bak/
 
 # Notebook and OS artifacts
 .ipynb_checkpoints/
@@ -42,7 +45,56 @@ env/
 # Secrets and credentials
 .env
 .env.*
+.envrc
 *.pem
 *.key
 credentials.json
 secrets.json
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+wheels/
+share/python-wheels/
+
+# Testing
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# Type checkers
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyre/
+.pytype/
+
+# Misc tooling
+.ruff_cache/
+.pdm-python
+.pdm-build/
+.pixi
+__pypackages__/
+cython_debug/
+.abstra/
+tempCodeRunnerFile.py
+.pypirc
+
+# Marimo
+marimo/_static/
+marimo/_lsp/
+__marimo__/
+
+# Streamlit
+.streamlit/secrets.toml
