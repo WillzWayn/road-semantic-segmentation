@@ -59,10 +59,11 @@ def train_epoch(model, dataloader, criterion, optimizer, device):
         images = images.to(device)
         masks = masks.to(device)
 
+        optimizer.zero_grad()
+
         outputs = model(images)
         loss = criterion(outputs, masks)
 
-        optimizer.zero_grad()
         loss.backward()
         optimizer.step()
 

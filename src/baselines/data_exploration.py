@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from PIL import Image
+from utils.visualization import load_label_from_id, load_satellite_image, save_segmentation_grid
 
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 DATA_DIR = os.path.join(PROJECT_ROOT, "dataset")
@@ -20,32 +21,17 @@ def plot_samples(n_samples=4):
     files = [f.replace("_sat.jpg", "") for f in os.listdir(train_dir) if f.endswith("_sat.jpg")]
     files = random.sample(files, min(n_samples, len(files)))
 
-    fig, axes = plt.subplots(n_samples, 3, figsize=(12, 4 * n_samples))
-    if n_samples == 1:
-        axes = np.expand_dims(axes, axis=0)
+    samples = []
+    for file_id in files:
+        sat_img = load_satellite_image(train_dir, file_id)
+        mask_img = load_label_from_id(train_dir, file_id)
+        samples.append({
+            "image": sat_img,
+            "label": mask_img,
+            "overlay": mask_img,
+        })
 
-    for i, file_id in enumerate(files):
-        sat_path = os.path.join(train_dir, f"{file_id}_sat.jpg")
-        mask_path = os.path.join(train_dir, f"{file_id}_mask.png")
-
-        sat_img = load_image(sat_path)
-        mask_img = load_image(mask_path)
-
-        axes[i, 0].imshow(sat_img)
-        axes[i, 0].set_title(f"Satellite {file_id}")
-        axes[i, 0].axis("off")
-
-        axes[i, 1].imshow(mask_img, cmap="gray")
-        axes[i, 1].set_title("Mask")
-        axes[i, 1].axis("off")
-
-        axes[i, 2].imshow(sat_img)
-        axes[i, 2].imshow(mask_img, alpha=0.5)
-        axes[i, 2].set_title("Overlay")
-        axes[i, 2].axis("off")
-
-    plt.tight_layout()
-    plt.savefig(os.path.join(LOG_DIR, "data_samples.png"), dpi=150)
+    save_segmentation_grid(samples, os.path.join(LOG_DIR, "data_samples.png"), dpi=150, bbox_inches=None)
 
 
 def analyze_dataset():
@@ -82,11 +68,7 @@ def analyze_masks():
     total_pixels = []
 
     for file_id in files[:100]:
-        mask_path = os.path.join(train_dir, f"{file_id}_mask.png")
-        mask = load_image(mask_path)
-
-        if len(mask.shape) == 3:
-            mask = mask[:, :, 0]
+        mask = load_label_from_id(train_dir, file_id)
 
         road_pixels.append(np.sum(mask > 0))
         total_pixels.append(mask.size)
@@ -107,9 +89,7 @@ def analyze_masks():
     plt.title("Distribution of Road Coverage")
 
     plt.subplot(1, 2, 2)
-    sample_mask = load_image(os.path.join(train_dir, f"{files[0]}_mask.png"))
-    if len(sample_mask.shape) == 3:
-        sample_mask = sample_mask[:, :, 0]
+    sample_mask = load_label_from_id(train_dir, files[0])
     plt.hist(sample_mask.flatten(), bins=50, edgecolor="black")
     plt.xlabel("Pixel Value")
     plt.ylabel("Count")

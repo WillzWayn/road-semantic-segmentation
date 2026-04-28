@@ -26,7 +26,3 @@ class DeepLabV3(nn.Module):
 
     def forward(self, x):
         return self.model(x)['out']
-
-
-def get_deeplabv3_plus(in_channels=3, out_channels=1, backbone='resnet50', pretrained=True):
-    return DeepLabV3(in_channels, out_channels, backbone, pretrained)

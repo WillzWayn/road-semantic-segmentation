@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from PIL import Image
 from scipy import stats
+from utils.visualization import load_label_from_id, load_satellite_image, save_segmentation_grid
 
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 DATA_DIR = os.path.join(PROJECT_ROOT, "dataset")
@@ -125,14 +126,9 @@ def calculate_precision_recall(pred, gt):
 
 
 def save_standardized_grid(file_ids, split_dir, include_label, output_path, strategy):
-    n_cols = 4 if include_label else 3
-    fig, axes = plt.subplots(len(file_ids), n_cols, figsize=(4 * n_cols, 3.6 * len(file_ids)))
-    if len(file_ids) == 1:
-        axes = np.expand_dims(axes, axis=0)
-
-    for i, file_id in enumerate(file_ids):
-        sat_path = os.path.join(split_dir, f"{file_id}_sat.jpg")
-        sat_img = load_image(sat_path)
+    samples = []
+    for file_id in file_ids:
+        sat_img = load_satellite_image(split_dir, file_id)
 
         pred_mask = apply_ks_threshold(
             sat_img,
@@ -142,38 +138,16 @@ def save_standardized_grid(file_ids, split_dir, include_label, output_path, stra
             strategy["mode"],
         )
 
-        axes[i, 0].imshow(sat_img)
-        axes[i, 0].axis("off")
-
-        pred_col = 1
+        sample = {
+            "image": sat_img,
+            "prediction": pred_mask,
+            "overlay": pred_mask,
+        }
         if include_label:
-            mask_path = os.path.join(split_dir, f"{file_id}_mask.png")
-            mask_img = load_image(mask_path)
-            if len(mask_img.shape) == 3:
-                mask_img = mask_img[:, :, 0]
-            axes[i, 1].imshow(mask_img, cmap="gray")
-            axes[i, 1].axis("off")
-            pred_col = 2
+            sample["label"] = load_label_from_id(split_dir, file_id)
+        samples.append(sample)
 
-        axes[i, pred_col].imshow(pred_mask, cmap="gray")
-        axes[i, pred_col].axis("off")
-
-        overlay_col = pred_col + 1
-        axes[i, overlay_col].imshow(sat_img)
-        overlay_mask = np.ma.masked_where(pred_mask == 0, pred_mask)
-        axes[i, overlay_col].imshow(overlay_mask, cmap="autumn", alpha=0.45)
-        axes[i, overlay_col].axis("off")
-
-        if i == 0:
-            axes[i, 0].set_title("IMAGE")
-            if include_label:
-                axes[i, 1].set_title("LABEL")
-            axes[i, pred_col].set_title("PREDICT")
-            axes[i, overlay_col].set_title("OVERLAY")
-
-    plt.tight_layout()
-    plt.savefig(output_path, dpi=150)
-    plt.close(fig)
+    save_segmentation_grid(samples, output_path, dpi=150, bbox_inches=None)
 
 
 def main():
@@ -188,12 +162,8 @@ def main():
 
     for file_id in sample_files:
         sat_path = os.path.join(train_dir, f"{file_id}_sat.jpg")
-        mask_path = os.path.join(train_dir, f"{file_id}_mask.png")
         sat_img = load_image(sat_path)
-        mask_img = load_image(mask_path)
-
-        if len(mask_img.shape) == 3:
-            mask_img = mask_img[:, :, 0]
+        mask_img = load_label_from_id(train_dir, file_id)
 
         road_mask = mask_img > 0
         non_road_mask = mask_img == 0
@@ -240,11 +210,8 @@ def main():
         ious, precisions, recalls = [], [], []
         for file_id in eval_train_ids:
             sat_path = os.path.join(train_dir, f"{file_id}_sat.jpg")
-            mask_path = os.path.join(train_dir, f"{file_id}_mask.png")
             sat_img = load_image(sat_path)
-            mask_img = load_image(mask_path)
-            if len(mask_img.shape) == 3:
-                mask_img = mask_img[:, :, 0]
+            mask_img = load_label_from_id(train_dir, file_id)
 
             pred_mask = apply_ks_threshold(
                 sat_img,

@@ -1,0 +1,472 @@
+\documentclass[conference]{IEEEtran}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath, amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{cleveref}
+\usepackage{cite}
+\usepackage{xcolor}
+\usepackage{microtype}
+
+\graphicspath{{./}{../../assets/}{../../outputs/}}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=black,
+  citecolor=black,
+  urlcolor=black
+}
+
+\title{Road Segmentation from Satellite Imagery:\\
+A Comparison of Deep Learning and Traditional Baselines}
+
+\author{
+  \IEEEauthorblockN{William Wayn Monteiro, Maysa Xavier}
+  \IEEEauthorblockA{COMP11069 -- Data Mining and Visualisation\\
+  University of the West of Scotland\\
+  2025/2026}
+}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+Detecting roads in satellite photographs seems straightforward until you realise that asphalt
+in full sunlight and dry riverbed in shadow are, in RGB, nearly identical; the meaning is in
+the shape, not the colour. We approach this as a binary semantic segmentation task on the
+DeepGlobe Road Extraction dataset \cite{demir2018deepglobe}, starting from the simplest method
+the data suggests and adding complexity only where a clear gap demands it. Two classical baselines,
+RGB thresholding and K-Means clustering, establish a performance floor; U-Net
+\cite{ronneberger2015unet} and DeepLabV3 \cite{chen2017deeplabv3} with a pretrained ResNet-50
+backbone push well beyond it. Notably, U-Net, trained from scratch with skip
+connections, achieves the best result: an IoU of \textbf{0.588}, roughly 0.24 points ahead of
+DeepLabV3 (IoU 0.348) and more than 0.30 points above both classical methods. The reason, as
+we will argue, is not that U-Net is a better model in general -- it is that its architecture
+directly matches what thin road structures require.
+\end{abstract}
+
+% ---------------------
+\section{Introduction}
+\label{sec:intro}
+
+Imagine holding a satellite photograph of a rural region and being asked to draw every road in it.
+Your eye finds them almost immediately: thin grey threads snaking through green fields, widening
+into intersections, disappearing under tree canopy and reappearing a few hundred metres later.
+Your brain solves this by reading context -- those grey pixels form a coherent, elongated
+structure; they are roads.
+Now imagine asking a computer that has never seen a road to do the same.
+It sees a matrix of numbers.
+The grey values that belong to asphalt in full sun are, numerically, almost identical to the grey
+values of a dry riverbed in shadow.
+The problem is hard not because roads are rare, but because the meaningful signal is spatial,
+not spectral.
+
+Formally, this is a \textit{semantic segmentation} problem: given an RGB satellite image
+$\mathbf{x} \in \mathbb{R}^{H \times W \times 3}$, we want a pixel-wise binary map
+$\hat{y} \in \{0,1\}^{H \times W}$ where $1$ marks road.
+Two challenges dominate the problem: class imbalance (roads cover only 4--8\% of any tile),
+and fine spatial detail (thin roads are just a few pixels wide).
+These two observations will quietly govern every methodological decision we make.
+
+In this report, we let the data guide us from the beginning.
+We start with the simplest possible approach and add complexity only when the data gives us a
+concrete reason to.
+That path leads us through RGB thresholding, K-Means clustering, U-Net, and DeepLabV3,
+in that order of sophistication. Furthermore, we experiment with spatial resolution sizes ($256\times256$ vs $512\times512$) to observe the trade-offs in capturing fine structures.
+The main contributions of this work are:
+\begin{enumerate}
+  \item A data-driven exploratory analysis of the DeepGlobe dataset that anticipates,
+        before any experiment is run, the ceiling on purely pixel-level approaches.
+  \item A from-scratch U-Net implementation with a targeted augmentation pipeline,
+        reaching IoU 0.588 on the validation split.
+  \item A critical analysis of why a larger, pretrained model does not automatically win
+        on a task that rewards local spatial detail over global context.
+\end{enumerate}
+
+% ---------------------
+\section{Dataset}
+\label{sec:data}
+
+\subsection{DeepGlobe Road Extraction}
+
+The DeepGlobe Road Extraction dataset \cite{demir2018deepglobe} contains high-resolution
+($1024 \times 1024$ pixels, 50\,cm/pixel ground sampling distance) satellite imagery collected
+across Thailand, Indonesia, and India.
+Each image is paired with a binary mask where white pixels mark road.
+We use the pre-partitioned splits: 803 training images, 171 validation, and 172 test images
+(test masks are withheld by the challenge organisers).
+All images are resized to $256 \times 256$ pixels for computational tractability;
+we discuss the consequences of this decision in~\Cref{sec:discussion}.
+
+\subsection{Exploratory Data Analysis}
+\label{sec:eda}
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\columnwidth]{../static/images_example.png}
+  \caption{Samples from the DeepGlobe training split, with their binary road masks.
+           Road pixels are white.
+           Notice the variety of terrain types and the range of road widths --
+           from wide urban arteries to thin dirt tracks that nearly vanish.}
+  \label{fig:examples}
+\end{figure}
+
+Looking at \Cref{fig:examples} for just a few seconds is already instructive.
+Three observations emerge directly from the images, and each one will constrain our choice
+of method.
+
+\textbf{Class imbalance.}
+Road pixels are a small minority of each tile.
+From a sample of 50 training images, we measured an average road pixel fraction of 4--8\%.
+In practice, this means: a classifier that predicts ``no road'' everywhere
+would achieve over 92\% pixel accuracy.
+This is why we use IoU as our evaluation metric rather than accuracy; IoU penalises false
+negatives and false positives equally and cannot be inflated by predicting the majority class.
+
+\textbf{Spectral heterogeneity.}
+Road pixels do not cluster neatly in RGB space.
+Asphalt in direct sunlight is bright; the same road under tree canopy is dark;
+a packed-earth track in the dry season can be almost white.
+This implies that any method relying purely on colour thresholds will face an impossible
+trade-off: set the threshold too low and you label every bright field as road;
+too high and you miss every road in shadow.
+This observation puts a hard ceiling on the classical methods we introduce in
+\Cref{sec:baselines} before we run a single experiment.
+
+\textbf{Thin, elongated structures.}
+After resizing to $256 \times 256$, many rural roads are 3--5 pixels wide.
+A model that discards spatial resolution through aggressive downsampling, and only tries to
+recover it at the end, will systematically miss these structures; the information was already
+gone.
+This is a hard requirement, not a preference.
+Any architecture we trust must have a mechanism to \textit{preserve} high-resolution spatial
+information, not reconstruct it from scratch.
+That requirement points directly to U-Net's skip connections,
+as we will see in \Cref{sec:unet}.
+
+% ---------------------
+\section{Methodology}
+\label{sec:method}
+
+Our analysis is structured as a ladder of increasing complexity.
+We introduce the simplest method first, identify where it fails, and let that failure motivate
+the next step up.
+The ladder has four rungs: RGB thresholding, K-Means clustering, U-Net, and DeepLabV3.
+
+\subsection{Preprocessing}
+
+All images are resized to $256 \times 256$ and normalised using ImageNet channel statistics
+($\mu = [0.485, 0.456, 0.406]$, $\sigma = [0.229, 0.224, 0.225]$).
+Masks are scaled to $[0,1]$ and binarised at 0.5; no further normalisation applies to them.
+
+\subsection{Data Augmentation}
+
+With only 803 training images, overfitting is a real risk.
+We apply the following augmentations \textit{exclusively at training time}: horizontal and
+vertical flips (50\% probability each), random 90/180/270-degree rotations (50\% probability),
+and affine transforms including rotation ($\pm 12$°), translation ($\pm 5\%$), and scale jitter
+($0.95$--$1.05\times$, 40\% probability).
+Every spatial transform applies identically to the image and its mask,
+so no labelling inconsistency is introduced.
+
+\subsection{Baselines}
+\label{sec:baselines}
+
+\subsubsection{RGB Thresholding}
+
+The first rung of our ladder: classify a pixel as road if its RGB values satisfy a learned
+threshold.
+Rather than picking thresholds by hand, we apply the two-sample Kolmogorov--Smirnov (KS)
+test \cite{kolmogorov1933ks} to find the value that best separates road and non-road pixel
+distributions for each colour channel, using a sample of 50 training images.
+We tested five strategies (above-threshold, below-threshold, per-channel range, any-channel
+above, and a manual bright-pixel rule at (150,150,150)) and selected the one maximising IoU
+on the fixed evaluation samples.
+
+Given the spectral heterogeneity we observed in the EDA, we already expected this to struggle;
+the experiments will confirm it.
+
+\subsubsection{K-Means Clustering}
+
+K-Means \cite{lloyd1982kmeans} is the natural next step: instead of a fixed threshold, let
+the algorithm discover the colour clusters present in the data.
+It partitions pixels into $k$ groups in RGB space without any supervision from the masks;
+after clustering, we assign each group the label (road or not) that maximises its overlap
+with the training masks.
+We swept $k \in \{2, 3, 4, 5, 6\}$ and selected $k=2$ by training IoU.
+
+The same spectral limitation applies here: K-Means still examines each pixel in isolation.
+A dark-road pixel and a dark-shadow pixel land in the same cluster.
+That said, we include it because it gives us a useful reference point; if a neural network
+cannot comfortably beat it, we should question the network.
+
+\subsection{U-Net}
+\label{sec:unet}
+
+The third rung is where we bring in spatial context.
+U-Net \cite{ronneberger2015unet}, proposed by Olaf Ronneberger, Philipp Fischer, and Thomas
+Brox (2015) for biomedical image segmentation, is an encoder--decoder architecture whose
+defining feature is the \textit{skip connection}: feature maps from each encoder stage
+concatenate directly into the matching decoder stage.
+That is precisely what the thin-road observation demanded: high-resolution information does
+not disappear during downsampling; the skip connections preserve it on a side channel and
+reinject it during upsampling.
+
+Our implementation follows the original paper closely:
+\begin{itemize}
+  \item \textbf{Encoder}: four \texttt{Down} blocks, each applying $2\times2$ max-pooling
+        followed by two $3\times3$ convolutions with BatchNorm and ReLU.
+        Channel widths: $64 \to 128 \to 256 \to 512$.
+  \item \textbf{Bottleneck}: one \texttt{DoubleConv} block at $1024$ channels.
+  \item \textbf{Decoder}: four \texttt{Up} blocks applying a $2\times2$ transposed
+        convolution, skip-connection concatenation, and \texttt{DoubleConv}.
+        The decoder mirrors the encoder in depth and width.
+  \item \textbf{Output}: $1\times1$ convolution to a single-channel logit map.
+\end{itemize}
+The model has 31.0\,M parameters.
+We trained it for 30 epochs using the Adam optimiser ($\eta = 10^{-4}$) with
+\texttt{ReduceLROnPlateau} (patience\,=\,3, factor\,=\,0.5), binary cross-entropy loss,
+and batch size 8 for the initial $256\times256$ resolution experiments.
+Training ran on an NVIDIA A10G GPU (24\,GB VRAM) via Modal cloud computing,
+completing in roughly 30 minutes. A secondary experiment at $512\times512$ resolution was conducted with batch size 4 due to VRAM constraints, finishing in approximately 2 hours.
+
+\subsection{DeepLabV3}
+\label{sec:deeplabv3}
+
+The fourth rung takes a different approach to the same problem.
+DeepLabV3 \cite{chen2017deeplabv3} does not recover spatial resolution through skip
+connections; instead, it never loses it in the first place, using \textit{atrous} (dilated)
+convolutions that expand the receptive field \textit{without} reducing spatial dimensions.
+Its Atrous Spatial Pyramid Pooling (ASPP) module applies several parallel atrous convolutions
+at different dilation rates and combines them; the idea is that multi-scale context helps
+recognise objects regardless of their apparent size in the image.
+
+Our implementation wraps PyTorch's pretrained \texttt{deeplabv3\_resnet50}, replacing the
+original 21-class COCO head with a single-channel binary head.
+The ResNet-50 backbone initialises from ImageNet weights; we fine-tune all parameters
+end-to-end under the same training configuration as U-Net.
+The model has 39.6\,M parameters and trained in roughly 45 minutes.
+
+We can already form a hypothesis at this point: U-Net preserves local detail;
+DeepLabV3 aggregates global context.
+Roads are thin, local structures.
+We will see whether that distinction makes a difference.
+
+\subsection{Evaluation Metric}
+
+We report Intersection over Union (IoU), the Jaccard index:
+\begin{figure}[h]
+  \centering
+  \begin{minipage}{0.4\linewidth}
+    \centering
+    \begin{equation}
+      \text{IoU} = \frac{|\hat{Y} \cap Y|}{|\hat{Y} \cup Y|}
+      \label{eq:iou}
+    \end{equation}
+  \end{minipage}
+  \begin{minipage}{0.4\linewidth}
+    \centering
+    \includegraphics[width=0.6\linewidth]{../static/iou_diagram.pdf}
+  \end{minipage}
+\end{figure}
+
+where $Y$ is the ground-truth mask and $\hat{Y}$ the predicted mask.
+IoU is symmetric in false positives and false negatives and cannot be inflated by the
+background class, which is why we chose it given the class imbalance noted
+in~\Cref{sec:eda}.
+
+% ---------------------
+\section{Results}
+\label{sec:results}
+
+\subsection{Quantitative Comparison}
+
+\begin{table}[t]
+  \centering
+  \caption{Validation IoU for all methods. For the deep learning models,
+           the binarisation threshold was chosen by sweeping $[0.35, 0.50]$
+           in steps of 0.05 on the validation set.}
+  \label{tab:results}
+  \begin{tabular}{lcc}
+    \toprule
+    Method                  & Val.\ IoU         & Parameters \\
+    \midrule
+    RGB Thresholding (KS)   & $\sim$0.15--0.25  & -- \\
+    K-Means ($k=2$)         & $\sim$0.20--0.30  & -- \\
+    DeepLabV3 (ResNet-50)   & 0.348             & 39.6\,M \\
+    U-Net ($512\times512$)  & 0.565             & 31.0\,M \\
+    \textbf{U-Net ($256\times256$)} & \textbf{0.588}    & 31.0\,M \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\Cref{tab:results} summarises the main results.
+The gap is not marginal: U-Net leads DeepLabV3 by roughly 0.24 IoU points
+and outperforms both classical baselines by more than 0.30 points.
+The ladder we described in \Cref{sec:method} produces a clear ordering; each rung outperforms
+the one below it, with one notable exception -- DeepLabV3 falls lower than its size and
+pretraining would suggest.
+We will discuss why in \Cref{sec:discussion}.
+
+Additionally, we observe an interesting dynamic regarding image resolution. 
+While downsampling original $1024\times1024$ images to $256\times256$ yielded an IoU of 0.588, increasing the input resolution to $512\times512$ paradoxically slightly lowered the IoU to 0.565. 
+This occurs because downsampling heavily blurs thin roads into wider, more prominent patches, making them easier for the model to detect and producing "artificially" higher overlap in low-resolution space. Conversely, at $512\times512$, the roads remain thinner and sharper, but the metric penalises the model more severely for slight pixel misalignments at the boundaries. The higher resolution model preserves the true topology of the road network better, even if the strict exact-pixel matching of IoU does not fully reflect this qualitative improvement.
+
+\textbf{Threshold calibration.}
+U-Net outputs raw logits, so we swept the binarisation threshold on the validation set to
+find the optimal operating point:
+\begin{center}
+\begin{tabular}{ccc}
+  \toprule
+  Threshold & Global IoU & Mean IoU \\
+  \midrule
+  0.35 & 0.5849 & 0.5780 \\
+  \textbf{0.40} & \textbf{0.5882} & \textbf{0.5799} \\
+  0.45 & 0.5865 & 0.5769 \\
+  \bottomrule
+\end{tabular}
+\end{center}
+The optimal threshold is 0.40, slightly below 0.50.
+This tells us that the model is slightly underconfident, assigning probabilities
+just below 0.50 to pixels it is genuinely uncertain about.
+Lowering the threshold by ten points recovers those borderline pixels without flooding the
+prediction with false positives -- a sign that the model's uncertainty is reasonable,
+even if its confidence is not.
+
+\subsection{Training Dynamics}
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\columnwidth]{../outputs/unet/training_curves.png}
+  \caption{U-Net training and validation loss over 30 epochs.
+           Validation loss tracks training loss throughout, with no divergence,
+           indicating that the augmentation strategy is controlling overfitting.
+           The small inflections correspond to learning-rate reductions from
+           \texttt{ReduceLROnPlateau}.}
+  \label{fig:curves}
+\end{figure}
+
+\Cref{fig:curves} shows the U-Net learning curves.
+Training and validation losses track each other closely from the first epoch, with no sign
+of divergence over the full 30 epochs.
+We note that the loss plateaus fairly early; the \texttt{ReduceLROnPlateau} scheduler
+triggers a few times (visible as the inflection points) and each trigger produces a small
+but consistent improvement.
+Together, this tells us that 30 epochs with the chosen augmentation pipeline is a sensible
+training recipe for this dataset size -- the model converges cleanly, without overfitting.
+
+\subsection{Qualitative Predictions}
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\columnwidth]{../outputs/unet/unet_prediction_4_valid.png}
+  \caption{U-Net predictions on validation images (image, ground-truth,
+           prediction, overlay).
+           U-Net recovers thin rural roads and complex urban intersections
+           with sharp, coherent outlines.}
+  \label{fig:unet_preds}
+\end{figure}
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\columnwidth]{../outputs/deeplabv3/deeplabv3_prediction_4_valid.png}
+  \caption{DeepLabV3 predictions on the same validation images.
+           The model identifies road \textit{regions} but blurs their
+           boundaries and struggles to trace thin structures.}
+  \label{fig:dlv3_preds}
+\end{figure}
+
+Comparing \Cref{fig:unet_preds} and \Cref{fig:dlv3_preds} side by side is probably the
+clearest way to understand the 0.24 IoU gap.
+U-Net draws sharp, connected road outlines, including on the narrow rural tracks that are
+hardest to find.
+DeepLabV3, by contrast, tends to produce blob-like activations: it finds the \textit{region}
+where the road is, but blurs its edges and drops many of the thin connecting segments.
+This is precisely the failure mode one would predict for a model whose
+design favours large-receptive-field global context over fine-grained spatial preservation.
+The numbers in \Cref{tab:results} confirm it; the images make it impossible to miss.
+
+% ---------------------
+\section{Discussion}
+\label{sec:discussion}
+
+\textbf{Why classical baselines fail.}
+The EDA in \Cref{sec:eda} already gave us the answer before we ran a single experiment.
+Both RGB thresholding and K-Means treat every pixel independently, with no knowledge of its
+neighbours.
+A pixel from a shaded road segment is spectrally identical to a pixel from a forest floor;
+the only difference is context -- it sits surrounded by other road-like pixels forming a
+long, narrow strip.
+Any method that ignores spatial relationships cannot exploit that context; the ceiling on
+their performance is set by how spectrally separable road pixels happen to be, and on this
+dataset, that answer is: not very.
+
+\textbf{Why U-Net outperforms DeepLabV3.}
+This is the more interesting result, and we think it deserves a careful interpretation rather
+than a quick dismissal.
+DeepLabV3 is, by standard measures, the stronger model: more parameters, a backbone
+pre-trained on a large dataset, and a multi-scale context aggregation module built for
+recognising objects at many scales.
+We believe the explanation lies in a mismatch between what DeepLabV3 was designed to solve
+and what this task actually requires.
+ASPP was built to aggregate multi-scale context, which helps enormously when the same object
+can appear at many different sizes -- a car seen from far away versus a car close up.
+Roads at $256 \times 256$ are not that kind of object; they are thin, local structures where
+what matters is not ``what is happening across the whole image'' but ``what is happening in
+the 5 pixels around me.''
+U-Net's skip connections are a direct answer to that local question; ASPP's global pooling
+is not.
+It is also possible that ImageNet pre-training is a mild disadvantage here, since satellite
+imagery looks nothing like the object photographs in ImageNet, and the backbone may take
+longer to unlearn those priors.
+
+\textbf{Paths forward.}
+Several directions could push performance further from where we are now.
+First, replacing binary cross-entropy with a combined BCE+Dice loss would directly optimise
+a proxy of IoU and helps under class imbalance \cite{milletari2016vnet}.
+Second, we experimented with training at $512 \times 512$ rather than $256 \times 256$ to reduce spatial
+aliasing. While it helped preserve thinner structures visually, it dropped the IoU marginally due to the strictness of high-resolution pixel-perfect matching. Exploring boundary-aware loss functions could help align the qualitative improvement with the quantitative metric.
+Third, test-time augmentation (averaging predictions over flipped and rotated versions of
+each test image at no extra training cost) typically yields 1--3 IoU points in segmentation
+tasks.
+We could also consider using U-Net predictions as a spatial prior for DeepLabV3's context
+head, though that would step outside the scope of this coursework.
+
+\textbf{Limitations.}
+Our evaluation covers only the DeepGlobe validation set, which shares the same geographic
+distribution (South and Southeast Asia) as the training data.
+We have no evidence that the model generalises to different regions, sensors, or seasons.
+The test-set IoU is unavailable, since labels are withheld by the challenge.
+Finally, the $256 \times 256$ resizing is a known bottleneck; it discards spatial detail
+that likely matters for the smallest road categories.
+
+% ---------------------
+\section{Conclusion}
+\label{sec:conclusion}
+
+We framed road segmentation as binary semantic segmentation and compared four methods of
+increasing complexity on the DeepGlobe dataset.
+The performance ordering closely mirrors each method's ability to exploit
+spatial context: classical pixel-level baselines (IoU $\leq 0.30$) fall below both deep
+learning models, and U-Net (IoU 0.588) outperforms DeepLabV3 (IoU 0.348) because its
+skip-connection architecture directly addresses the thin-road requirement we identified in
+the exploratory analysis -- before a single epoch of training.
+
+The lesson we take from this work goes beyond road segmentation.
+A careful reading of the data is more valuable than a reflexive choice of the most powerful
+model available.
+Understanding that roads are thin, sparse, and spectrally heterogeneous pointed us to
+U-Net's design from the beginning; the results confirmed that intuition.
+The reader who wants to push further will find the combined loss strategies and
+higher-resolution training pipelines we identified in the discussion to be the most
+promising starting points.
+
+% ---------------------
+\bibliographystyle{IEEEtran}
+\bibliography{report}
+
+\end{document}

@@ -1,6 +1,0 @@
-\beamer@sectionintoc {1}{The Problem}{3}{0}{1}
-\beamer@sectionintoc {2}{Dataset \& EDA}{5}{0}{2}
-\beamer@sectionintoc {3}{Methods}{7}{0}{3}
-\beamer@sectionintoc {4}{Results}{11}{0}{4}
-\beamer@sectionintoc {5}{Discussion}{13}{0}{5}
-\beamer@sectionintoc {6}{Conclusion}{15}{0}{6}

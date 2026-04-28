@@ -1,28 +1,29 @@
 # Local dataset (download separately)
 dataset/
 
-# Training outputs - ignore all generated artifacts
+# Training outputs - keep generated experiment artifacts out of git
 outputs/
 checkpoints/
 
-# Keep only curated documentation artifacts
-!outputs/.gitkeep
-!outputs/baselines/
-!outputs/baselines/.gitkeep
-!outputs/baselines/kmeans_results.png
-!outputs/baselines/mask_analysis.png
-!outputs/unet/
-!outputs/unet/.gitkeep
-!outputs/unet/training_curves.png
-!outputs/unet/unet_predictions_valid_grid_01_06.png
-!outputs/deeplabv3/
-!outputs/deeplabv3/.gitkeep
-!outputs/deeplabv3/training_curves.png
-!outputs/deeplabv3/deeplabv3_predictions_valid_grid_01_06.png
+# Curated README/documentation assets should live outside outputs/
+# Example: docs/images/
 
 # Logs and downloaded artifacts
 logs/
 modal_downloads/
+
+# LaTeX build artifacts
+*.aux
+*.bbl
+*.blg
+*.nav
+*.snm
+*.toc
+*.out
+*.fls
+*.fdb_latexmk
+missfont.log
+texput.log
 
 # Python cache files
 __pycache__/
@@ -41,6 +42,9 @@ venv.bak/
 # Notebook and OS artifacts
 .ipynb_checkpoints/
 .DS_Store
+
+# Internal development notes
+docs/superpowers/
 
 # Secrets and credentials
 .env
